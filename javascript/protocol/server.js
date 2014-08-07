@@ -19,8 +19,8 @@ Faye.Server = Faye.Class({
     this._engine.openSocket(clientId, new Faye.Server.Socket(this, socket, request));
   },
 
-  closeSocket: function(clientId) {
-    this._engine.flush(clientId);
+  closeSocket: function(clientId, close) {
+    this._engine.flushConnection(clientId, close);
   },
 
   process: function(messages, request, callback, context) {
@@ -94,7 +94,6 @@ Faye.Server = Faye.Class({
     if (!Faye.Grammar.CHANNEL_NAME.test(channelName))
       error = Faye.Error.channelInvalid(channelName);
 
-    delete message.clientId;
     if (!error) this._engine.publish(message);
 
     response = this._makeResponse(message);
@@ -104,8 +103,7 @@ Faye.Server = Faye.Class({
   },
 
   _handleMeta: function(message, local, callback, context) {
-    var method   = Faye.Channel.parse(message.channel)[1],
-        clientId = message.clientId,
+    var method = Faye.Channel.parse(message.channel)[1],
         response;
 
     if (Faye.indexOf(this.META_METHODS, method) < 0) {

@@ -28,8 +28,8 @@ module Faye
       @engine.open_socket(client_id, Socket.new(self, socket, env))
     end
 
-    def close_socket(client_id)
-      @engine.flush(client_id)
+    def close_socket(client_id, close = true)
+      @engine.flush_connection(client_id, close)
     end
 
     def process(messages, env, &callback)
@@ -94,7 +94,6 @@ module Faye
         error = Faye::Error.channel_invalid(channel_name)
       end
 
-      message.delete('clientId')
       @engine.publish(message) unless error
 
       response = make_response(message)
@@ -104,8 +103,7 @@ module Faye
     end
 
     def handle_meta(message, local, &callback)
-      method    = Channel.parse(message['channel'])[1]
-      client_id = message['clientId']
+      method = Channel.parse(message['channel'])[1]
 
       unless META_METHODS.include?(method)
         response = make_response(message)
