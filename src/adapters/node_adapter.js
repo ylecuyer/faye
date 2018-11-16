@@ -7,7 +7,7 @@ var path        = require('path'),
     EventSource = WebSocket.EventSource;
 
 var constants       = require('../util/constants'),
-    extend          = require('../util/extend'),
+    assign          = require('../util/assign'),
     idFromMessages  = require('../util/id_from_messages'),
     toJSON          = require('../util/to_json'),
     validateOptions = require('../util/validate_options'),
@@ -151,15 +151,19 @@ var NodeAdapter = Class({ className: 'NodeAdapter',
           jsonp   = params.jsonp || constants.JSONP_CALLBACK,
           isGet   = (request.method === 'GET'),
           type    = isGet ? contenttypes.TYPE_SCRIPT : contenttypes.TYPE_JSON,
-          headers = extend({}, type),
+          headers = assign({}, type),
           origin  = request.headers.origin;
 
       if (!this.VALID_JSONP_CALLBACK.test(jsonp))
         return this._returnError(response, {message: 'Invalid JSON-P callback: ' + jsonp});
 
-      if (origin) headers['Access-Control-Allow-Origin'] = origin;
       headers['Cache-Control'] = 'no-cache, no-store';
       headers['X-Content-Type-Options'] = 'nosniff';
+
+      if (origin) {
+        headers['Access-Control-Allow-Credentials'] = 'true';
+        headers['Access-Control-Allow-Origin'] = origin;
+      }
 
       this._server.process(message, request, function(replies) {
         var body = toJSON(replies);
@@ -234,7 +238,7 @@ var NodeAdapter = Class({ className: 'NodeAdapter',
 
   _handleOptions: function(response) {
     var headers = {
-      'Access-Control-Allow-Credentials': 'false',
+      'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Headers':     'Accept, Authorization, Content-Type, Pragma, X-Requested-With',
       'Access-Control-Allow-Methods':     'POST, GET',
       'Access-Control-Allow-Origin':      '*',
@@ -302,6 +306,6 @@ for (var method in Publisher) (function(method) {
   };
 })(method);
 
-extend(NodeAdapter.prototype, Logging);
+assign(NodeAdapter.prototype, Logging);
 
 module.exports = NodeAdapter;

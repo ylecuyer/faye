@@ -3,7 +3,7 @@
 var Class     = require('../util/class'),
     URI       = require('../util/uri'),
     cookies   = require('../util/cookies'),
-    extend    = require('../util/extend'),
+    assign    = require('../util/assign'),
     Logging   = require('../mixins/logging'),
     Publisher = require('../mixins/publisher'),
     Transport = require('../transport'),
@@ -78,7 +78,7 @@ var Dispatcher = Class({ className: 'Dispatcher',
 
   selectTransport: function(transportTypes) {
     Transport.get(this, transportTypes, this._disabled, function(transport) {
-      this.debug('Selected ? transport for ?', transport.connectionType, URI.stringify(transport.endpoint));
+      this.debug('Selected ? transport for ?', transport.connectionType, transport.endpoint.href);
 
       if (transport === this._transport) return;
       if (this._transport) this._transport.close();
@@ -179,7 +179,7 @@ Dispatcher.create = function(client, endpoint, options) {
   return new Dispatcher(client, endpoint, options);
 };
 
-extend(Dispatcher.prototype, Publisher);
-extend(Dispatcher.prototype, Logging);
+assign(Dispatcher.prototype, Publisher);
+assign(Dispatcher.prototype, Logging);
 
 module.exports = Dispatcher;

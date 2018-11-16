@@ -3,11 +3,11 @@
 var Class     = require('../util/class'),
     Set       = require('../util/set'),
     URI       = require('../util/uri'),
-    extend    = require('../util/extend'),
+    assign    = require('../util/assign'),
     toJSON    = require('../util/to_json'),
     Transport = require('./transport');
 
-var CORS = extend(Class(Transport, {
+var CORS = assign(Class(Transport, {
   encode: function(messages) {
     return 'message=' + encodeURIComponent(toJSON(messages));
   },
@@ -20,7 +20,8 @@ var CORS = extend(Class(Transport, {
         self     = this,
         key;
 
-    xhr.open('POST', URI.stringify(this.endpoint), true);
+    xhr.open('POST', this.endpoint.href, true);
+    xhr.withCredentials = true;
 
     if (xhr.setRequestHeader) {
       xhr.setRequestHeader('Pragma', 'no-cache');

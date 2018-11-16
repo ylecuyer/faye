@@ -6,13 +6,13 @@ var Class      = require('../util/class'),
     URI        = require('../util/uri'),
     browser    = require('../util/browser'),
     copyObject = require('../util/copy_object'),
-    extend     = require('../util/extend'),
+    assign     = require('../util/assign'),
     toJSON     = require('../util/to_json'),
     ws         = require('../util/websocket'),
     Deferrable = require('../mixins/deferrable'),
     Transport  = require('./transport');
 
-var WebSocket = extend(Class(Transport, {
+var WebSocket = assign(Class(Transport, {
   UNCONNECTED:  1,
   CONNECTING:   2,
   CONNECTED:    3,
@@ -121,7 +121,11 @@ var WebSocket = extend(Class(Transport, {
 
     if (cookie !== '') options.headers['Cookie'] = cookie;
 
-    return ws.create(url, [], options);
+    try {
+      return ws.create(url, [], options);
+    } catch (e) {
+      // catch CSP error to allow transport to fallback to next connType
+    }
   },
 
   _ping: function() {
@@ -153,7 +157,7 @@ var WebSocket = extend(Class(Transport, {
   }
 });
 
-extend(WebSocket.prototype, Deferrable);
+assign(WebSocket.prototype, Deferrable);
 
 if (browser.Event && global.onbeforeunload !== undefined)
   browser.Event.on(global, 'beforeunload', function() { WebSocket._unloaded = true });

@@ -6,11 +6,11 @@ var http   = require('http'),
 
 var Class     = require('../util/class'),
     URI       = require('../util/uri'),
-    extend    = require('../util/extend'),
+    assign    = require('../util/assign'),
     toJSON    = require('../util/to_json'),
     Transport = require('./transport');
 
-var NodeHttp = extend(Class(Transport, {
+var NodeHttp = assign(Class(Transport, { className: 'NodeHttp',
   SECURE_PROTOCOLS: ['https:', 'wss:'],
 
   initialize: function() {
@@ -22,7 +22,7 @@ var NodeHttp = extend(Class(Transport, {
     var proxy = this._proxy;
     if (!proxy.origin) return;
 
-    this._proxyUri    = url.parse(proxy.origin);
+    this._proxyUri    = URI.parse(proxy.origin);
     this._proxySecure = (this.SECURE_PROTOCOLS.indexOf(this._proxyUri.protocol) >= 0);
 
     if (!this._endpointSecure) {
@@ -30,17 +30,17 @@ var NodeHttp = extend(Class(Transport, {
       return;
     }
 
-    var options = extend({
+    var options = assign({
       proxy: {
         host:       this._proxyUri.hostname,
         port:       this._proxyUri.port || this.DEFAULT_PORTS[this._proxyUri.protocol],
         proxyAuth:  this._proxyUri.auth,
-        headers:    extend({host: this.endpoint.host}, proxy.headers)
+        headers:    assign({host: this.endpoint.host}, proxy.headers)
       }
     }, this._dispatcher.tls);
 
     if (this._proxySecure) {
-      extend(options.proxy, proxy.tls);
+      assign(options.proxy, proxy.tls);
       this._tunnel = tunnel.httpsOverHttps(options);
     } else {
       this._tunnel = tunnel.httpsOverHttp(options);
@@ -63,6 +63,7 @@ var NodeHttp = extend(Class(Transport, {
     });
 
     request.on('error', function(error) {
+      self.error('HTTP error: ' + error.message);
       self._handleError(messages);
     });
 
@@ -75,16 +76,21 @@ var NodeHttp = extend(Class(Transport, {
         proxy  = this._proxyUri,
         target = this._tunnel ? uri : (proxy || uri);
 
+    var headers = {
+      'Content-Length': content.length,
+      'Content-Type':   'application/json',
+      'Host':           uri.host
+    };
+
+    if (uri.auth)
+      headers['Authorization'] = 'Basic ' + new Buffer(uri.auth, 'utf8').toString('base64');
+
     var params = {
       method:   'POST',
       host:     target.hostname,
       port:     target.port || this.DEFAULT_PORTS[target.protocol],
       path:     uri.path,
-      headers:  extend({
-        'Content-Length': content.length,
-        'Content-Type':   'application/json',
-        'Host':           uri.host
-      }, this._dispatcher.headers)
+      headers:  assign(headers, this._dispatcher.headers)
     };
 
     var cookie = this._getCookies();
@@ -93,10 +99,10 @@ var NodeHttp = extend(Class(Transport, {
     if (this._tunnel) {
       params.agent = this._tunnel;
     } else if (this._endpointSecure) {
-      extend(params, this._dispatcher.tls);
+      assign(params, this._dispatcher.tls);
     } else if (proxy) {
       params.path = this.endpoint.href;
-      extend(params, this._proxy.tls);
+      assign(params, this._proxy.tls);
       if (proxy.auth)
         params.headers['Proxy-Authorization'] = new Buffer(proxy.auth, 'utf8').toString('base64');
     }
