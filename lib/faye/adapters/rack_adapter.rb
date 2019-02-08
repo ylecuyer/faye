@@ -186,9 +186,14 @@ module Faye
         buffer << chunk
       end
 
-      hijack.write(buffer)
-      hijack.flush
-      hijack.close_write
+      begin
+        hijack.write(buffer)
+        hijack.flush
+        hijack.close_write
+      rescue Errno::EPIPE => e
+        error "Couldn't send response (#{response}) because of #{e.message}"
+      end
+
     end
 
     def handle_websocket(request)
