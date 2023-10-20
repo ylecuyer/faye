@@ -18,8 +18,12 @@ module Faye
     def write_log(message_args, level)
       return unless Faye.logger
 
-      message = message_args.shift.gsub(/\?/) do
-        Faye.to_json(message_args.shift)
+      message = begin
+        message_args.shift.gsub(/\?/) do
+          Faye.to_json(message_args.shift)
+        end
+      rescue => e
+        "Failed to write log because of #{e.class} (#{e.message})"
       end
 
       banner = "[#{ self.class.name }] "
