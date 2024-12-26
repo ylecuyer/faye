@@ -143,7 +143,7 @@ module Faye
             fast_response = "/**/#{ jsonp }(#{ jsonp_escape(response) });"
             require 'securerandom'
             id = SecureRandom.hex(16)
-            slow_response = "/**/console.log('#{id} #{finish - start}  response #{jsonp_escape(response)}');#{ jsonp }(#{ jsonp_escape(response) });"
+            slow_response = "/**/console.error('#{id} #{finish - start}  response #{jsonp_escape(response)}');#{ jsonp }(#{ jsonp_escape(response) });"
 
             response = slow_response
             headers['Content-Disposition'] = 'attachment; filename=f.txt'
