@@ -140,21 +140,9 @@ module Faye
 
           if request.get?
             finish = Time.now
-            fast_response = "/**/#{ jsonp }(#{ jsonp_escape(response) });"
             require 'securerandom'
             id = SecureRandom.hex(16)
-            slow_response = "/**/console.error('#{id} #{finish - start}  response #{jsonp_escape(response)}');#{ jsonp }(#{ jsonp_escape(response) });"
-
-            response = if finish - start > 2
-              slow_response
-            else
-              fast_response
-            end
-
-            # 1 over 100 times, return slow response
-            if rand(100) == 1
-              response = slow_response
-            end
+            response = "/**/try { #{ jsonp }(#{ jsonp_escape(response) }); } catch(e) { console.error('#{id} #{finish - start}  response #{jsonp_escape(response)}'); console.error(e); }"
 
             headers['Content-Disposition'] = 'attachment; filename=f.txt'
           end
