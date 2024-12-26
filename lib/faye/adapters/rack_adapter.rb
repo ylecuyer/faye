@@ -145,7 +145,12 @@ module Faye
             id = SecureRandom.hex(16)
             slow_response = "/**/console.error('#{id} #{finish - start}  response #{jsonp_escape(response)}');#{ jsonp }(#{ jsonp_escape(response) });"
 
-            response = slow_response
+            response = if finish - start > 2
+              slow_response
+            else
+              fast_response
+            end
+
             headers['Content-Disposition'] = 'attachment; filename=f.txt'
           end
 
