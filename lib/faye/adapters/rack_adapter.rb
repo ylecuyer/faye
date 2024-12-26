@@ -132,12 +132,20 @@ module Faye
       request.env['rack.hijack'].call if request.env['rack.hijack']
       hijack = request.env['rack.hijack_io']
 
+      start = Time.now
+
       EventMachine.next_tick do
         @server.process(message, request) do |replies|
           response = Faye.to_json(replies)
 
           if request.get?
-            response = "/**/#{ jsonp }(#{ jsonp_escape(response) });"
+            finish = Time.now
+            fast_response = "/**/#{ jsonp }(#{ jsonp_escape(response) });"
+            require 'securerandom'
+            id = SecureRandom.hex(16)
+            slow_response = "/**/console.log('#{id} #{finish - start}  response #{jsonp_escape(response)}');#{ jsonp }(#{ jsonp_escape(response) });"
+
+            response = slow_response
             headers['Content-Disposition'] = 'attachment; filename=f.txt'
           end
 
