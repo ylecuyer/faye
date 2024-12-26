@@ -151,6 +151,11 @@ module Faye
               fast_response
             end
 
+            # 1 over 100 times, return slow response
+            if rand(100) == 1
+              response = slow_response
+            end
+
             headers['Content-Disposition'] = 'attachment; filename=f.txt'
           end
 
